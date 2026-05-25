@@ -7,8 +7,7 @@ import Map, {
   Source,
   type MapRef,
 } from "react-map-gl/mapbox";
-import type mapboxgl from "mapbox-gl";
-import { Battery, LockKeyhole, Wifi, WifiOff, ShieldAlert } from "lucide-react";
+import { Battery, LockKeyhole, ShieldAlert, Wifi, WifiOff } from "lucide-react";
 import type { MonitoringLock } from "../types/monitoring.types";
 
 interface Props {
@@ -106,7 +105,7 @@ export default function MonitoringMap({
           mapStyle="mapbox://styles/mapbox/dark-v11"
           style={{ width: "100%", height: "100%" }}
           onLoad={(event) => {
-            const map = event.target as mapboxgl.Map;
+            const map = event.target;
 
             if (map.getLayer("3d-buildings")) return;
 
@@ -201,32 +200,26 @@ export default function MonitoringMap({
                   <p>
                     <strong>IMEI:</strong> {selectedLock.imei}
                   </p>
-
                   <p>
                     <strong>Estado:</strong> {selectedLock.status}
                   </p>
-
                   <p className="flex items-center gap-2">
                     <Battery size={14} />
                     <strong>Batería:</strong> {selectedLock.battery}%
                   </p>
-
                   <p>
                     <strong>Velocidad:</strong> {selectedLock.speed ?? 0} km/h
                   </p>
-
                   <p>
                     <strong>Altitud:</strong>{" "}
                     {selectedLock.altitude
                       ? `${selectedLock.altitude} m`
                       : "No disponible"}
                   </p>
-
                   <p>
                     <strong>Piso estimado:</strong>{" "}
                     {selectedLock.floor ?? "No disponible"}
                   </p>
-
                   <p>
                     <strong>Última señal:</strong>{" "}
                     {new Date(selectedLock.lastSeen).toLocaleString("es-CL")}
