@@ -7,13 +7,29 @@ import Map, {
   Source,
   type MapRef,
 } from "react-map-gl/mapbox";
-import { Battery, LockKeyhole, ShieldAlert, Wifi, WifiOff } from "lucide-react";
+import {
+  Battery,
+  LockKeyhole,
+  MapPin,
+  Satellite,
+  ShieldAlert,
+  Signal,
+  Wifi,
+  WifiOff,
+  Radio,
+  LockOpen,
+  Lock,
+} from "lucide-react";
 import type { MonitoringLock } from "../types/monitoring.types";
 
 interface Props {
   locks: MonitoringLock[];
   selectedLockId: string | null;
   setSelectedLockId: (value: string | null) => void;
+  onOpenLock?: (terminalId: string) => void;
+  onCloseLock?: (terminalId: string) => void;
+  onEnableTracking?: (terminalId: string) => void;
+  commandLoading?: boolean;
 }
 
 const DEFAULT_CENTER = {
@@ -35,16 +51,10 @@ function isValidCoordinate(latitude?: number | null, longitude?: number | null) 
 }
 
 function markerColor(status: MonitoringLock["status"]) {
-  switch (status) {
-    case "ONLINE":
-      return "bg-emerald-400";
-    case "OFFLINE":
-      return "bg-slate-400";
-    case "ALARM":
-      return "bg-red-400";
-    default:
-      return "bg-cyan-400";
-  }
+  if (status === "ONLINE") return "bg-emerald-400";
+  if (status === "OFFLINE") return "bg-slate-400";
+  if (status === "ALARM") return "bg-red-400";
+  return "bg-cyan-400";
 }
 
 function StatusIcon({ status }: { status: MonitoringLock["status"] }) {
@@ -59,10 +69,41 @@ function StatusIcon({ status }: { status: MonitoringLock["status"] }) {
   return <ShieldAlert size={14} className="text-red-400" />;
 }
 
+function formatBattery(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "No disponible";
+  }
+
+  return `${value}%`;
+}
+
+function formatNumber(value?: number | null, suffix = "") {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "No disponible";
+  }
+
+  return `${value}${suffix}`;
+}
+
+function sourceLabel(source?: MonitoringLock["locationSource"]) {
+  if (source === "GPS") return "GPS";
+  if (source === "LBS") return "LBS / Antenas";
+  if (source === "WIFI") return "WiFi";
+  return "No disponible";
+}
+
+function getTerminalId(lock: MonitoringLock) {
+  return lock.imei;
+}
+
 export default function MonitoringMap({
   locks,
   selectedLockId,
   setSelectedLockId,
+  onOpenLock,
+  onCloseLock,
+  onEnableTracking,
+  commandLoading = false,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
   const token = import.meta.env.VITE_MAPBOX_TOKEN;
@@ -74,8 +115,7 @@ export default function MonitoringMap({
   }, [locks]);
 
   const selectedLock = useMemo(() => {
-    const lock = validLocks.find((item) => item.id === selectedLockId);
-    return lock ?? null;
+    return validLocks.find((item) => item.id === selectedLockId) ?? null;
   }, [validLocks, selectedLockId]);
 
   useEffect(() => {
@@ -83,7 +123,7 @@ export default function MonitoringMap({
 
     if (selectedLock) {
       mapRef.current.flyTo({
-        center: [selectedLock.longitude, selectedLock.latitude],
+        center: [selectedLock.longitude ?? 0, selectedLock.latitude ?? 0],
         zoom: 18,
         pitch: 70,
         bearing: -25,
@@ -97,7 +137,10 @@ export default function MonitoringMap({
       const first = validLocks[0];
 
       mapRef.current.flyTo({
-        center: [first.longitude, first.latitude],
+        center: [
+          first.longitude ?? DEFAULT_CENTER.longitude,
+          first.latitude ?? DEFAULT_CENTER.latitude,
+        ],
         zoom: 14,
         pitch: 60,
         bearing: -20,
@@ -162,8 +205,8 @@ export default function MonitoringMap({
                 geometry: {
                   type: "LineString",
                   coordinates: validLocks.map((lock) => [
-                    lock.longitude,
-                    lock.latitude,
+                    lock.longitude ?? 0,
+                    lock.latitude ?? 0,
                   ]),
                 },
               }}
@@ -183,8 +226,8 @@ export default function MonitoringMap({
           {validLocks.map((lock) => (
             <Marker
               key={lock.id}
-              longitude={lock.longitude}
-              latitude={lock.latitude}
+              longitude={lock.longitude ?? DEFAULT_CENTER.longitude}
+              latitude={lock.latitude ?? DEFAULT_CENTER.latitude}
               anchor="bottom"
               onClick={(event) => {
                 event.originalEvent.stopPropagation();
@@ -209,14 +252,14 @@ export default function MonitoringMap({
 
           {selectedLock && (
             <Popup
-              longitude={selectedLock.longitude}
-              latitude={selectedLock.latitude}
+              longitude={selectedLock.longitude ?? DEFAULT_CENTER.longitude}
+              latitude={selectedLock.latitude ?? DEFAULT_CENTER.latitude}
               anchor="top"
               closeOnClick={false}
               onClose={() => setSelectedLockId(null)}
             >
-              <div className="min-w-[260px] text-slate-900">
-                <div className="flex items-center justify-between">
+              <div className="min-w-[290px] text-slate-900">
+                <div className="flex items-center justify-between gap-3">
                   <strong>{selectedLock.name}</strong>
                   <StatusIcon status={selectedLock.status} />
                 </div>
@@ -225,30 +268,98 @@ export default function MonitoringMap({
                   <p>
                     <strong>IMEI:</strong> {selectedLock.imei}
                   </p>
+
                   <p>
                     <strong>Estado:</strong> {selectedLock.status}
                   </p>
+
                   <p className="flex items-center gap-2">
                     <Battery size={14} />
-                    <strong>Batería:</strong> {selectedLock.battery}%
+                    <strong>Batería:</strong>{" "}
+                    {formatBattery(selectedLock.battery)}
                   </p>
+
+                  <p className="flex items-center gap-2">
+                    <MapPin size={14} />
+                    <strong>Fuente:</strong>{" "}
+                    {sourceLabel(selectedLock.locationSource)}
+                  </p>
+
                   <p>
-                    <strong>Velocidad:</strong> {selectedLock.speed ?? 0} km/h
+                    <strong>GPS válido:</strong>{" "}
+                    {selectedLock.gpsValid ? "Sí" : "No"}
                   </p>
+
+                  <p>
+                    <strong>Precisión:</strong>{" "}
+                    {formatNumber(selectedLock.locationAccuracy, " m")}
+                  </p>
+
+                  <p className="flex items-center gap-2">
+                    <Satellite size={14} />
+                    <strong>Satélites:</strong>{" "}
+                    {formatNumber(selectedLock.satellites)}
+                  </p>
+
+                  <p className="flex items-center gap-2">
+                    <Signal size={14} />
+                    <strong>Señal CSQ:</strong>{" "}
+                    {formatNumber(selectedLock.csq)}
+                  </p>
+
+                  <p>
+                    <strong>Velocidad:</strong>{" "}
+                    {formatNumber(selectedLock.speed, " km/h")}
+                  </p>
+
                   <p>
                     <strong>Altitud:</strong>{" "}
-                    {selectedLock.altitude
-                      ? `${selectedLock.altitude} m`
-                      : "No disponible"}
+                    {formatNumber(selectedLock.altitude, " m")}
                   </p>
+
                   <p>
                     <strong>Piso estimado:</strong>{" "}
                     {selectedLock.floor ?? "No disponible"}
                   </p>
+
                   <p>
                     <strong>Última señal:</strong>{" "}
                     {new Date(selectedLock.lastSeen).toLocaleString("es-CL")}
                   </p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    disabled={commandLoading || !onOpenLock}
+                    onClick={() => onOpenLock?.(getTerminalId(selectedLock))}
+                    className="flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <LockOpen size={13} />
+                    Abrir
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={commandLoading || !onCloseLock}
+                    onClick={() => onCloseLock?.(getTerminalId(selectedLock))}
+                    className="flex items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Lock size={13} />
+                    Cerrar
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={commandLoading || !onEnableTracking}
+                    onClick={() =>
+                      onEnableTracking?.(getTerminalId(selectedLock))
+                    }
+                    className="flex items-center justify-center gap-1 rounded-lg bg-cyan-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Radio size={13} />
+                    GPS
+                  </button>
                 </div>
               </div>
             </Popup>

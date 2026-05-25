@@ -34,3 +34,22 @@ export async function closeLock(terminalId: string) {
 
   return response.data;
 }
+
+export async function enableTracking(
+  terminalId: string,
+  payload?: {
+    timeIntervalSeconds?: number;
+    heartbeatIntervalSeconds?: number;
+  }
+) {
+  const response = await api.post(
+    `/tcp/devices/${terminalId}/enable-tracking`,
+    {
+      timeIntervalSeconds: payload?.timeIntervalSeconds ?? 30,
+      heartbeatIntervalSeconds: payload?.heartbeatIntervalSeconds ?? 60,
+      operatorName: "admin",
+    }
+  );
+
+  return response.data;
+}

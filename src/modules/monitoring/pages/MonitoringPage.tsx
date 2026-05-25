@@ -12,6 +12,8 @@ import type { LockStatus, MonitoringLock } from "../types/monitoring.types";
 
 function hasValidCoordinates(lock: MonitoringLock) {
   return (
+    typeof lock.latitude === "number" &&
+    typeof lock.longitude === "number" &&
     Number.isFinite(lock.latitude) &&
     Number.isFinite(lock.longitude) &&
     lock.latitude >= -90 &&
@@ -37,10 +39,13 @@ export default function MonitoringPage() {
   const tcpStats = tcpStatsQuery.data;
 
   const filteredLocks = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
     return locks.filter((lock) => {
       const matchesSearch =
-        lock.name.toLowerCase().includes(search.toLowerCase()) ||
-        lock.imei.toLowerCase().includes(search.toLowerCase());
+        normalizedSearch.length === 0 ||
+        lock.name.toLowerCase().includes(normalizedSearch) ||
+        lock.imei.toLowerCase().includes(normalizedSearch);
 
       const matchesStatus = status === "ALL" || lock.status === status;
 
@@ -55,11 +60,8 @@ export default function MonitoringPage() {
   const selectedLock =
     filteredLocks.find((lock) => lock.id === selectedLockId) ?? null;
 
-  const selectedMapLockId = selectedLock
-    ? hasValidCoordinates(selectedLock)
-      ? selectedLock.id
-      : null
-    : null;
+  const selectedMapLockId =
+    selectedLock && hasValidCoordinates(selectedLock) ? selectedLock.id : null;
 
   function handleOpenLock(terminalId: string) {
     openLockMutation.mutate(terminalId);
@@ -85,6 +87,7 @@ export default function MonitoringPage() {
         </h1>
 
         <button
+          type="button"
           onClick={() => locksQuery.refetch()}
           className="mt-4 rounded-xl bg-red-500/20 px-4 py-2 text-sm text-red-200 hover:bg-red-500/30"
         >

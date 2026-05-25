@@ -4,6 +4,7 @@ import {
   getMonitoringLocks,
   getTcpStats,
   openLock,
+  enableTracking,
 } from "../services/monitoring.service";
 
 export function useMonitoringLocks() {
@@ -43,5 +44,15 @@ export function useCloseLock() {
       await queryClient.invalidateQueries({ queryKey: ["monitoring-locks"] });
       await queryClient.invalidateQueries({ queryKey: ["tcp-stats"] });
     },
+  });
+}
+
+export function useEnableTracking() {
+  return useMutation({
+    mutationFn: (terminalId: string) =>
+      enableTracking(terminalId, {
+        timeIntervalSeconds: 30,
+        heartbeatIntervalSeconds: 60,
+      }),
   });
 }

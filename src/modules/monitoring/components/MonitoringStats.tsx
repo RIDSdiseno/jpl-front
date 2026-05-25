@@ -1,5 +1,7 @@
 import {
   Activity,
+  LocateFixed,
+  LocateOff,
   LockKeyhole,
   RadioTower,
   ShieldAlert,
@@ -28,6 +30,16 @@ export default function MonitoringStats({ locks, summary, tcpStats }: Props) {
   const alarm =
     summary?.alarm ?? locks.filter((lock) => lock.status === "ALARM").length;
 
+  const withLocation =
+    summary?.withLocation ??
+    locks.filter(
+      (lock) =>
+        typeof lock.latitude === "number" &&
+        typeof lock.longitude === "number"
+    ).length;
+
+  const withoutLocation = summary?.withoutLocation ?? total - withLocation;
+
   const cards = [
     {
       label: "Candados",
@@ -49,6 +61,20 @@ export default function MonitoringStats({ locks, summary, tcpStats }: Props) {
       icon: WifiOff,
       className: "text-slate-300",
       description: "Sin conexión",
+    },
+    {
+      label: "Con ubicación",
+      value: withLocation,
+      icon: LocateFixed,
+      className: "text-cyan-300",
+      description: "GPS o LBS válido",
+    },
+    {
+      label: "Sin ubicación",
+      value: withoutLocation,
+      icon: LocateOff,
+      className: "text-orange-300",
+      description: "Sin coordenadas",
     },
     {
       label: "Alarmas",
@@ -74,7 +100,7 @@ export default function MonitoringStats({ locks, summary, tcpStats }: Props) {
   ];
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
       {cards.map((card) => {
         const Icon = card.icon;
 

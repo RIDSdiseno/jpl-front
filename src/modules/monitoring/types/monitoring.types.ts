@@ -1,17 +1,31 @@
 export type LockStatus = "ONLINE" | "OFFLINE" | "ALARM";
+export type MonitoringLocationSource = "GPS" | "LBS" | "WIFI" | "INVALID";
 
 export interface MonitoringLock {
   id: string;
   name: string;
   imei: string;
   status: LockStatus;
-  latitude: number;
-  longitude: number;
-  battery: number;
-  speed?: number;
+
+  latitude: number | null;
+  longitude: number | null;
+
+  battery: number | null;
+  speed: number;
   altitude?: number;
   floor?: number;
-  lastSeen: string;
+
+  lastSeen: string | Date;
+
+  locationSource: MonitoringLocationSource;
+  gpsValid: boolean;
+  coordsInRange: boolean;
+  locationAccuracy?: number;
+
+  satellites?: number;
+  csq?: number;
+
+  onlineFromTcp: boolean;
 }
 
 export interface MonitoringSummary {
@@ -19,6 +33,8 @@ export interface MonitoringSummary {
   online: number;
   offline: number;
   alarm: number;
+  withLocation: number;
+  withoutLocation: number;
 }
 
 export interface MonitoringLocksResponse {
