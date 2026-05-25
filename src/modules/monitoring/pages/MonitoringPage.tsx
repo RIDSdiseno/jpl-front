@@ -4,6 +4,7 @@ import MonitoringSidebar from "../components/MonitoringSidebar";
 import MonitoringStats from "../components/MonitoringStats";
 import {
   useCloseLock,
+  useEnableTracking,
   useMonitoringLocks,
   useOpenLock,
   useTcpStats,
@@ -33,6 +34,7 @@ export default function MonitoringPage() {
 
   const openLockMutation = useOpenLock();
   const closeLockMutation = useCloseLock();
+  const enableTrackingMutation = useEnableTracking();
 
   const locks = locksQuery.data?.locks ?? [];
   const summary = locksQuery.data?.summary;
@@ -70,6 +72,15 @@ export default function MonitoringPage() {
   function handleCloseLock(terminalId: string) {
     closeLockMutation.mutate(terminalId);
   }
+
+  function handleEnableTracking(terminalId: string) {
+    enableTrackingMutation.mutate(terminalId);
+  }
+
+  const commandLoading =
+    openLockMutation.isPending ||
+    closeLockMutation.isPending ||
+    enableTrackingMutation.isPending;
 
   if (locksQuery.isLoading) {
     return (
@@ -127,18 +138,17 @@ export default function MonitoringPage() {
 
       <section className="grid gap-6 xl:grid-cols-[390px_1fr]">
         <MonitoringSidebar
-          locks={filteredLocks}
-          search={search}
-          status={status}
-          selectedLockId={selectedLockId}
-          setSearch={setSearch}
-          setStatus={setStatus}
-          setSelectedLockId={setSelectedLockId}
-          onOpenLock={handleOpenLock}
-          onCloseLock={handleCloseLock}
-          commandLoading={
-            openLockMutation.isPending || closeLockMutation.isPending
-          }
+        locks={filteredLocks}
+        search={search}
+        status={status}
+        selectedLockId={selectedLockId}
+        setSearch={setSearch}
+        setStatus={setStatus}
+        setSelectedLockId={setSelectedLockId}
+        onOpenLock={handleOpenLock}
+        onCloseLock={handleCloseLock}
+        onEnableTracking={handleEnableTracking}
+        commandLoading={commandLoading}
         />
 
         <MonitoringMap
