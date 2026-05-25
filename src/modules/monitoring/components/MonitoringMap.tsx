@@ -16,6 +16,24 @@ interface Props {
   setSelectedLockId: (value: string | null) => void;
 }
 
+const DEFAULT_CENTER = {
+  longitude: -70.6693,
+  latitude: -33.4489,
+};
+
+function isValidCoordinate(latitude?: number | null, longitude?: number | null) {
+  return (
+    typeof latitude === "number" &&
+    typeof longitude === "number" &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
 function markerColor(status: MonitoringLock["status"]) {
   switch (status) {
     case "ONLINE":
@@ -49,9 +67,16 @@ export default function MonitoringMap({
   const mapRef = useRef<MapRef | null>(null);
   const token = import.meta.env.VITE_MAPBOX_TOKEN;
 
+  const validLocks = useMemo(() => {
+    return locks.filter((lock) =>
+      isValidCoordinate(lock.latitude, lock.longitude)
+    );
+  }, [locks]);
+
   const selectedLock = useMemo(() => {
-    return locks.find((lock) => lock.id === selectedLockId) ?? null;
-  }, [locks, selectedLockId]);
+    const lock = validLocks.find((item) => item.id === selectedLockId);
+    return lock ?? null;
+  }, [validLocks, selectedLockId]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -68,8 +93,8 @@ export default function MonitoringMap({
       return;
     }
 
-    if (locks.length > 0) {
-      const first = locks[0];
+    if (validLocks.length > 0) {
+      const first = validLocks[0];
 
       mapRef.current.flyTo({
         center: [first.longitude, first.latitude],
@@ -79,7 +104,7 @@ export default function MonitoringMap({
         duration: 1200,
       });
     }
-  }, [selectedLock, locks]);
+  }, [selectedLock, validLocks]);
 
   if (!token) {
     return (
@@ -96,8 +121,8 @@ export default function MonitoringMap({
           ref={mapRef}
           mapboxAccessToken={token}
           initialViewState={{
-            longitude: -70.6693,
-            latitude: -33.4489,
+            longitude: DEFAULT_CENTER.longitude,
+            latitude: DEFAULT_CENTER.latitude,
             zoom: 13,
             pitch: 60,
             bearing: -20,
@@ -127,7 +152,7 @@ export default function MonitoringMap({
         >
           <NavigationControl position="top-right" />
 
-          {locks.length > 0 && (
+          {validLocks.length > 1 && (
             <Source
               id="locks-line"
               type="geojson"
@@ -136,7 +161,7 @@ export default function MonitoringMap({
                 properties: {},
                 geometry: {
                   type: "LineString",
-                  coordinates: locks.map((lock) => [
+                  coordinates: validLocks.map((lock) => [
                     lock.longitude,
                     lock.latitude,
                   ]),
@@ -155,7 +180,7 @@ export default function MonitoringMap({
             </Source>
           )}
 
-          {locks.map((lock) => (
+          {validLocks.map((lock) => (
             <Marker
               key={lock.id}
               longitude={lock.longitude}

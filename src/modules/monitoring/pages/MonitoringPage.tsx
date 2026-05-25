@@ -8,7 +8,18 @@ import {
   useOpenLock,
   useTcpStats,
 } from "../hooks/useMonitoring";
-import type { LockStatus } from "../types/monitoring.types";
+import type { LockStatus, MonitoringLock } from "../types/monitoring.types";
+
+function hasValidCoordinates(lock: MonitoringLock) {
+  return (
+    Number.isFinite(lock.latitude) &&
+    Number.isFinite(lock.longitude) &&
+    lock.latitude >= -90 &&
+    lock.latitude <= 90 &&
+    lock.longitude >= -180 &&
+    lock.longitude <= 180
+  );
+}
 
 export default function MonitoringPage() {
   const [search, setSearch] = useState("");
@@ -37,8 +48,18 @@ export default function MonitoringPage() {
     });
   }, [locks, search, status]);
 
+  const mapLocks = useMemo(() => {
+    return filteredLocks.filter(hasValidCoordinates);
+  }, [filteredLocks]);
+
   const selectedLock =
     filteredLocks.find((lock) => lock.id === selectedLockId) ?? null;
+
+  const selectedMapLockId = selectedLock
+    ? hasValidCoordinates(selectedLock)
+      ? selectedLock.id
+      : null
+    : null;
 
   function handleOpenLock(terminalId: string) {
     openLockMutation.mutate(terminalId);
@@ -99,11 +120,7 @@ export default function MonitoringPage() {
         </div>
       </section>
 
-      <MonitoringStats
-        locks={locks}
-        summary={summary}
-        tcpStats={tcpStats}
-      />
+      <MonitoringStats locks={locks} summary={summary} tcpStats={tcpStats} />
 
       <section className="grid gap-6 xl:grid-cols-[390px_1fr]">
         <MonitoringSidebar
@@ -122,8 +139,8 @@ export default function MonitoringPage() {
         />
 
         <MonitoringMap
-          locks={filteredLocks}
-          selectedLockId={selectedLock?.id ?? selectedLockId}
+          locks={mapLocks}
+          selectedLockId={selectedMapLockId}
           setSelectedLockId={setSelectedLockId}
         />
       </section>
