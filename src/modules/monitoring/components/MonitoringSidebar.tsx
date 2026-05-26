@@ -7,6 +7,7 @@ import {
   Radio,
   Search,
   Signal,
+  Target,
   UnlockKeyhole,
 } from "lucide-react";
 import type { LockStatus, MonitoringLock } from "../types/monitoring.types";
@@ -22,6 +23,7 @@ interface Props {
   onOpenLock: (terminalId: string) => void;
   onCloseLock: (terminalId: string) => void;
   onEnableTracking: (terminalId: string) => void;
+  onForceGps: (terminalId: string) => void;
   commandLoading: boolean;
 }
 
@@ -56,6 +58,14 @@ function formatBattery(value: number | null) {
   }
 
   return `${value}%`;
+}
+
+function formatVoltage(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "No disponible";
+  }
+
+  return `${value.toFixed(2)}V`;
 }
 
 function formatNumber(value?: number | null, suffix = "") {
@@ -93,6 +103,7 @@ export default function MonitoringSidebar({
   onOpenLock,
   onCloseLock,
   onEnableTracking,
+  onForceGps,
   commandLoading,
 }: Props) {
   return (
@@ -174,6 +185,9 @@ export default function MonitoringSidebar({
                       <Battery size={13} />
                       {formatBattery(lock.battery)}
                     </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Voltaje: {formatVoltage(lock.batteryVoltage)}
+                    </p>
                   </div>
 
                   <div className="rounded-lg bg-slate-900/70 p-2">
@@ -191,6 +205,9 @@ export default function MonitoringSidebar({
                         ? sourceLabel(lock.locationSource)
                         : "Sin GPS"}
                     </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      GPS status: {lock.gpsPositionStatus ?? "N/D"}
+                    </p>
                   </div>
 
                   <div className="rounded-lg bg-slate-900/70 p-2">
@@ -198,6 +215,9 @@ export default function MonitoringSidebar({
                     <p className="mt-1 flex items-center gap-1 text-slate-200">
                       <Signal size={13} />
                       {formatNumber(lock.csq)}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Loc status: {lock.locationStatusCode ?? "N/D"}
                     </p>
                   </div>
                 </div>
@@ -220,7 +240,7 @@ export default function MonitoringSidebar({
                 </p>
 
                 <div
-                  className="mt-4 grid grid-cols-3 gap-2"
+                  className="mt-4 grid grid-cols-2 gap-2"
                   onClick={(event) => event.stopPropagation()}
                 >
                   <button
@@ -250,7 +270,17 @@ export default function MonitoringSidebar({
                     className="flex items-center justify-center gap-2 rounded-lg border border-orange-400/20 bg-orange-400/10 px-3 py-2 text-xs font-semibold text-orange-300 hover:bg-orange-400/20 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Radio size={14} />
-                    GPS
+                    Tracking
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={commandLoading}
+                    onClick={() => onForceGps(lock.imei)}
+                    className="flex items-center justify-center gap-2 rounded-lg border border-fuchsia-400/20 bg-fuchsia-400/10 px-3 py-2 text-xs font-semibold text-fuchsia-300 hover:bg-fuchsia-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Target size={14} />
+                    Forzar GPS
                   </button>
                 </div>
               </button>

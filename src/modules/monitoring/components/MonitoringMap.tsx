@@ -9,16 +9,17 @@ import Map, {
 } from "react-map-gl/mapbox";
 import {
   Battery,
+  Lock,
   LockKeyhole,
+  LockOpen,
   MapPin,
+  Radio,
   Satellite,
   ShieldAlert,
   Signal,
+  Target,
   Wifi,
   WifiOff,
-  Radio,
-  LockOpen,
-  Lock,
 } from "lucide-react";
 import type { MonitoringLock } from "../types/monitoring.types";
 
@@ -29,6 +30,7 @@ interface Props {
   onOpenLock?: (terminalId: string) => void;
   onCloseLock?: (terminalId: string) => void;
   onEnableTracking?: (terminalId: string) => void;
+  onForceGps?: (terminalId: string) => void;
   commandLoading?: boolean;
 }
 
@@ -77,6 +79,14 @@ function formatBattery(value?: number | null) {
   return `${value}%`;
 }
 
+function formatVoltage(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "No disponible";
+  }
+
+  return `${value.toFixed(2)}V`;
+}
+
 function formatNumber(value?: number | null, suffix = "") {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return "No disponible";
@@ -103,6 +113,7 @@ export default function MonitoringMap({
   onOpenLock,
   onCloseLock,
   onEnableTracking,
+  onForceGps,
   commandLoading = false,
 }: Props) {
   const mapRef = useRef<MapRef | null>(null);
@@ -258,7 +269,7 @@ export default function MonitoringMap({
               closeOnClick={false}
               onClose={() => setSelectedLockId(null)}
             >
-              <div className="min-w-[290px] text-slate-900">
+              <div className="min-w-[310px] text-slate-900">
                 <div className="flex items-center justify-between gap-3">
                   <strong>{selectedLock.name}</strong>
                   <StatusIcon status={selectedLock.status} />
@@ -279,6 +290,11 @@ export default function MonitoringMap({
                     {formatBattery(selectedLock.battery)}
                   </p>
 
+                  <p>
+                    <strong>Voltaje:</strong>{" "}
+                    {formatVoltage(selectedLock.batteryVoltage)}
+                  </p>
+
                   <p className="flex items-center gap-2">
                     <MapPin size={14} />
                     <strong>Fuente:</strong>{" "}
@@ -288,6 +304,16 @@ export default function MonitoringMap({
                   <p>
                     <strong>GPS válido:</strong>{" "}
                     {selectedLock.gpsValid ? "Sí" : "No"}
+                  </p>
+
+                  <p>
+                    <strong>GPS status:</strong>{" "}
+                    {selectedLock.gpsPositionStatus ?? "No disponible"}
+                  </p>
+
+                  <p>
+                    <strong>Location status:</strong>{" "}
+                    {selectedLock.locationStatusCode ?? "No disponible"}
                   </p>
 
                   <p>
@@ -318,17 +344,12 @@ export default function MonitoringMap({
                   </p>
 
                   <p>
-                    <strong>Piso estimado:</strong>{" "}
-                    {selectedLock.floor ?? "No disponible"}
-                  </p>
-
-                  <p>
                     <strong>Última señal:</strong>{" "}
                     {new Date(selectedLock.lastSeen).toLocaleString("es-CL")}
                   </p>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     disabled={commandLoading || !onOpenLock}
@@ -358,7 +379,17 @@ export default function MonitoringMap({
                     className="flex items-center justify-center gap-1 rounded-lg bg-cyan-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Radio size={13} />
-                    GPS
+                    Tracking
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={commandLoading || !onForceGps}
+                    onClick={() => onForceGps?.(getTerminalId(selectedLock))}
+                    className="flex items-center justify-center gap-1 rounded-lg bg-fuchsia-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Target size={13} />
+                    Forzar GPS
                   </button>
                 </div>
               </div>

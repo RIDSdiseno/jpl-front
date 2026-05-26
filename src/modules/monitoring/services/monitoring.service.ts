@@ -53,3 +53,25 @@ export async function enableTracking(
 
   return response.data;
 }
+
+export async function forceGps(
+  terminalId: string,
+  payload?: {
+    timeIntervalSeconds?: number;
+    heartbeatIntervalSeconds?: number;
+    positionAccuracyMeters?: number;
+    gnssPositionQuality?: number;
+    locationStatus?: number;
+  }
+) {
+  const response = await api.post(`/tcp/devices/${terminalId}/force-gps`, {
+    timeIntervalSeconds: payload?.timeIntervalSeconds ?? 30,
+    heartbeatIntervalSeconds: payload?.heartbeatIntervalSeconds ?? 60,
+    positionAccuracyMeters: payload?.positionAccuracyMeters ?? 10,
+    gnssPositionQuality: payload?.gnssPositionQuality ?? 1,
+    locationStatus: payload?.locationStatus ?? 1,
+    operatorName: "admin",
+  });
+
+  return response.data;
+}
