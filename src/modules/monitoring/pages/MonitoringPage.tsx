@@ -5,6 +5,7 @@ import MonitoringStats from "../components/MonitoringStats";
 import {
   useCloseLock,
   useEnableTracking,
+  useForceGps,
   useMonitoringLocks,
   useOpenLock,
   useTcpStats,
@@ -35,6 +36,7 @@ export default function MonitoringPage() {
   const openLockMutation = useOpenLock();
   const closeLockMutation = useCloseLock();
   const enableTrackingMutation = useEnableTracking();
+  const forceGpsMutation = useForceGps();
 
   const locks = locksQuery.data?.locks ?? [];
   const summary = locksQuery.data?.summary;
@@ -77,10 +79,15 @@ export default function MonitoringPage() {
     enableTrackingMutation.mutate(terminalId);
   }
 
+  function handleForceGps(terminalId: string) {
+    forceGpsMutation.mutate(terminalId);
+  }
+
   const commandLoading =
     openLockMutation.isPending ||
     closeLockMutation.isPending ||
-    enableTrackingMutation.isPending;
+    enableTrackingMutation.isPending ||
+    forceGpsMutation.isPending;
 
   if (locksQuery.isLoading) {
     return (
@@ -138,23 +145,29 @@ export default function MonitoringPage() {
 
       <section className="grid gap-6 xl:grid-cols-[390px_1fr]">
         <MonitoringSidebar
-        locks={filteredLocks}
-        search={search}
-        status={status}
-        selectedLockId={selectedLockId}
-        setSearch={setSearch}
-        setStatus={setStatus}
-        setSelectedLockId={setSelectedLockId}
-        onOpenLock={handleOpenLock}
-        onCloseLock={handleCloseLock}
-        onEnableTracking={handleEnableTracking}
-        commandLoading={commandLoading}
+          locks={filteredLocks}
+          search={search}
+          status={status}
+          selectedLockId={selectedLockId}
+          setSearch={setSearch}
+          setStatus={setStatus}
+          setSelectedLockId={setSelectedLockId}
+          onOpenLock={handleOpenLock}
+          onCloseLock={handleCloseLock}
+          onEnableTracking={handleEnableTracking}
+          onForceGps={handleForceGps}
+          commandLoading={commandLoading}
         />
 
         <MonitoringMap
           locks={mapLocks}
           selectedLockId={selectedMapLockId}
           setSelectedLockId={setSelectedLockId}
+          onOpenLock={handleOpenLock}
+          onCloseLock={handleCloseLock}
+          onEnableTracking={handleEnableTracking}
+          onForceGps={handleForceGps}
+          commandLoading={commandLoading}
         />
       </section>
     </div>
