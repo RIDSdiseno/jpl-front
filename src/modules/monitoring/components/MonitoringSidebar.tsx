@@ -206,18 +206,18 @@ export default function MonitoringSidebar({
                         : "Sin GPS"}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">
-                      GPS status: {lock.gpsPositionStatus ?? "N/D"}
+                      GPS: {lock.gpsValid ? "Válido ✓" : "No válido"}
                     </p>
                   </div>
 
                   <div className="rounded-lg bg-slate-900/70 p-2">
-                    <p className="text-slate-500">Señal</p>
+                    <p className="text-slate-500">Señal CSQ</p>
                     <p className="mt-1 flex items-center gap-1 text-slate-200">
                       <Signal size={13} />
                       {formatNumber(lock.csq)}
                     </p>
                     <p className="mt-1 text-[11px] text-slate-500">
-                      Loc status: {lock.locationStatusCode ?? "N/D"}
+                      Vel: {formatNumber(lock.speed, " km/h")}
                     </p>
                   </div>
                 </div>
@@ -228,14 +228,13 @@ export default function MonitoringSidebar({
                     {lock.latitude?.toFixed(6)}, {lock.longitude?.toFixed(6)}
                   </p>
                 ) : (
-                  <p className="mt-3 text-xs text-orange-300">
-                    Sin coordenadas disponibles. Esperando GPS o LBS válido.
+                  <p className="mt-3 text-xs text-orange-300/80">
+                    Sin coordenadas — esperando señal GPS.
                   </p>
                 )}
 
                 <p className="mt-2 text-xs text-slate-500">
-                  Fuente: {sourceLabel(lock.locationSource)} · GPS válido:{" "}
-                  {lock.gpsValid ? "Sí" : "No"} · Altitud:{" "}
+                  Fuente: {sourceLabel(lock.locationSource)} · Alt:{" "}
                   {formatNumber(lock.altitude, " m")}
                 </p>
 

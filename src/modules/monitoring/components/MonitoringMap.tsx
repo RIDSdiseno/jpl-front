@@ -268,93 +268,90 @@ export default function MonitoringMap({
               anchor="top"
               closeOnClick={false}
               onClose={() => setSelectedLockId(null)}
+              maxWidth="340px"
             >
-              <div className="min-w-[310px] text-slate-900">
-                <div className="flex items-center justify-between gap-3">
-                  <strong>{selectedLock.name}</strong>
+              <div className="min-w-[300px] rounded-[14px] bg-slate-950 p-4 text-slate-200">
+                {/* Header */}
+                <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800">
+                    <LockKeyhole size={15} className="text-cyan-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">{selectedLock.name}</p>
+                    <p className="text-[10px] text-slate-500">{selectedLock.imei}</p>
+                  </div>
                   <StatusIcon status={selectedLock.status} />
                 </div>
 
-                <div className="mt-3 space-y-2 text-sm">
-                  <p>
-                    <strong>IMEI:</strong> {selectedLock.imei}
-                  </p>
+                {/* Info grid */}
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="text-slate-500">Estado</p>
+                    <p className={`mt-0.5 font-semibold ${
+                      selectedLock.status === "ONLINE"
+                        ? "text-emerald-400"
+                        : selectedLock.status === "ALARM"
+                          ? "text-red-400"
+                          : "text-slate-400"
+                    }`}>
+                      {selectedLock.status === "ONLINE" ? "En línea" : selectedLock.status === "OFFLINE" ? "Sin conexión" : "Alarma"}
+                    </p>
+                  </div>
 
-                  <p>
-                    <strong>Estado:</strong> {selectedLock.status}
-                  </p>
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="text-slate-500">Fuente GPS</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">
+                      {selectedLock.gpsValid
+                        ? "GPS válido ✓"
+                        : sourceLabel(selectedLock.locationSource) !== "No disponible"
+                          ? sourceLabel(selectedLock.locationSource)
+                          : "Sin señal"}
+                    </p>
+                  </div>
 
-                  <p className="flex items-center gap-2">
-                    <Battery size={14} />
-                    <strong>Batería:</strong>{" "}
-                    {formatBattery(selectedLock.battery)}
-                  </p>
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="flex items-center gap-1 text-slate-500"><Battery size={11} /> Batería</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{formatBattery(selectedLock.battery)}</p>
+                    <p className="text-[10px] text-slate-600">{formatVoltage(selectedLock.batteryVoltage)}</p>
+                  </div>
 
-                  <p>
-                    <strong>Voltaje:</strong>{" "}
-                    {formatVoltage(selectedLock.batteryVoltage)}
-                  </p>
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="flex items-center gap-1 text-slate-500"><Signal size={11} /> Señal CSQ</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{formatNumber(selectedLock.csq)}</p>
+                    <p className="text-[10px] text-slate-600"><Satellite size={10} className="inline mr-0.5" />{formatNumber(selectedLock.satellites)} satélites</p>
+                  </div>
 
-                  <p className="flex items-center gap-2">
-                    <MapPin size={14} />
-                    <strong>Fuente:</strong>{" "}
-                    {sourceLabel(selectedLock.locationSource)}
-                  </p>
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="text-slate-500">Velocidad</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{formatNumber(selectedLock.speed, " km/h")}</p>
+                  </div>
 
-                  <p>
-                    <strong>GPS válido:</strong>{" "}
-                    {selectedLock.gpsValid ? "Sí" : "No"}
-                  </p>
-
-                  <p>
-                    <strong>GPS status:</strong>{" "}
-                    {selectedLock.gpsPositionStatus ?? "No disponible"}
-                  </p>
-
-                  <p>
-                    <strong>Location status:</strong>{" "}
-                    {selectedLock.locationStatusCode ?? "No disponible"}
-                  </p>
-
-                  <p>
-                    <strong>Precisión:</strong>{" "}
-                    {formatNumber(selectedLock.locationAccuracy, " m")}
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <Satellite size={14} />
-                    <strong>Satélites:</strong>{" "}
-                    {formatNumber(selectedLock.satellites)}
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <Signal size={14} />
-                    <strong>Señal CSQ:</strong>{" "}
-                    {formatNumber(selectedLock.csq)}
-                  </p>
-
-                  <p>
-                    <strong>Velocidad:</strong>{" "}
-                    {formatNumber(selectedLock.speed, " km/h")}
-                  </p>
-
-                  <p>
-                    <strong>Altitud:</strong>{" "}
-                    {formatNumber(selectedLock.altitude, " m")}
-                  </p>
-
-                  <p>
-                    <strong>Última señal:</strong>{" "}
-                    {new Date(selectedLock.lastSeen).toLocaleString("es-CL")}
-                  </p>
+                  <div className="rounded-lg bg-slate-900 p-2">
+                    <p className="text-slate-500">Altitud</p>
+                    <p className="mt-0.5 font-semibold text-slate-200">{formatNumber(selectedLock.altitude, " m")}</p>
+                  </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                {/* Coords */}
+                {isValidCoordinate(selectedLock.latitude, selectedLock.longitude) && (
+                  <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-slate-900 px-2.5 py-1.5 text-[11px] text-slate-400">
+                    <MapPin size={11} className="text-cyan-400 shrink-0" />
+                    {selectedLock.latitude?.toFixed(6)}, {selectedLock.longitude?.toFixed(6)}
+                  </div>
+                )}
+
+                {/* Last seen */}
+                <p className="mt-2 text-center text-[10px] text-slate-600">
+                  Última señal: {new Date(selectedLock.lastSeen).toLocaleString("es-CL")}
+                </p>
+
+                {/* Actions */}
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     disabled={commandLoading || !onOpenLock}
                     onClick={() => onOpenLock?.(getTerminalId(selectedLock))}
-                    className="flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-2 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40 transition"
                   >
                     <LockOpen size={13} />
                     Abrir
@@ -364,7 +361,7 @@ export default function MonitoringMap({
                     type="button"
                     disabled={commandLoading || !onCloseLock}
                     onClick={() => onCloseLock?.(getTerminalId(selectedLock))}
-                    className="flex items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-red-500/20 border border-red-500/30 px-2 py-2 text-xs font-semibold text-red-300 hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-40 transition"
                   >
                     <Lock size={13} />
                     Cerrar
@@ -373,10 +370,8 @@ export default function MonitoringMap({
                   <button
                     type="button"
                     disabled={commandLoading || !onEnableTracking}
-                    onClick={() =>
-                      onEnableTracking?.(getTerminalId(selectedLock))
-                    }
-                    className="flex items-center justify-center gap-1 rounded-lg bg-cyan-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => onEnableTracking?.(getTerminalId(selectedLock))}
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 px-2 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40 transition"
                   >
                     <Radio size={13} />
                     Tracking
@@ -386,7 +381,7 @@ export default function MonitoringMap({
                     type="button"
                     disabled={commandLoading || !onForceGps}
                     onClick={() => onForceGps?.(getTerminalId(selectedLock))}
-                    className="flex items-center justify-center gap-1 rounded-lg bg-fuchsia-600 px-2 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-fuchsia-500/20 border border-fuchsia-500/30 px-2 py-2 text-xs font-semibold text-fuchsia-300 hover:bg-fuchsia-500/30 disabled:cursor-not-allowed disabled:opacity-40 transition"
                   >
                     <Target size={13} />
                     Forzar GPS

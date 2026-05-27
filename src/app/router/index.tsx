@@ -6,6 +6,12 @@ import PlaceholderPage from "../../shared/components/common/PlaceholderPage";
 import { LoginPage } from "../../modules/auth/pages/LoginPage";
 import DashboardPage from "../../modules/dashboard/pages/DashboardPage";
 import MonitoringPage from "../../modules/monitoring/pages/MonitoringPage";
+import ControlLayout from "../../modules/control/pages/ControlLayout";
+import NfcPage from "../../modules/control/pages/NfcPage";
+import PasswordPage from "../../modules/control/pages/PasswordPage";
+import CmdLogPage from "../../modules/control/pages/CmdLogPage";
+import PreconfigPage from "../../modules/control/pages/PreconfigPage";
+import ParametersPage from "../../modules/control/pages/ParametersPage";
 
 export const router = createBrowserRouter([
   {
@@ -33,7 +39,15 @@ export const router = createBrowserRouter([
           },
           {
             path: "/control",
-            element: <PlaceholderPage title="Control" />,
+            element: <ControlLayout />,
+            children: [
+              { index: true, element: <Navigate to="/control/nfc" replace /> },
+              { path: "nfc", element: <NfcPage /> },
+              { path: "password", element: <PasswordPage /> },
+              { path: "cmd-log", element: <CmdLogPage /> },
+              { path: "preconfiguration", element: <PreconfigPage /> },
+              { path: "parameters", element: <ParametersPage /> },
+            ],
           },
           {
             path: "/events",
